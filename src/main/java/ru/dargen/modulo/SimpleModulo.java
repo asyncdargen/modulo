@@ -2,6 +2,8 @@ package ru.dargen.modulo;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import ru.dargen.modulo.classloader.ModuleClassLoaderFactory;
 import ru.dargen.modulo.loader.ModuleLoader;
 import ru.dargen.modulo.loader.ModuleRawInfo;
@@ -11,7 +13,7 @@ import ru.dargen.modulo.module.ModuleRedefiner;
 import ru.dargen.modulo.util.Timer;
 import ru.dargen.modulo.util.agent.RedefineHelper;
 
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -23,10 +25,49 @@ public class SimpleModulo implements Modulo {
     private final Lock lock = new ReentrantLock();
     private final Map<String, Module> loadedModules = new ConcurrentHashMap<>();
 
+    @Setter
+    @Accessors(fluent = true)
+    private boolean lazilyEnabling;
+    private final Set<Module> lazilyModules = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
     private final ModuleClassLoaderFactory<?> classLoaderFactory;
 
     static {
         RedefineHelper.init();
+    }
+
+    @Override
+    public boolean isLazilyEnabling() {
+        return lazilyEnabling;
+    }
+
+    @Override
+    public List<Module> enableLazies() {
+        try {
+            lock.lock();
+            ModuleException exception = null;
+            var loaded = new ArrayList<Module>();
+
+            for (Module module : lazilyModules) {
+                try {
+                    loadModule0(module);
+                    loaded.add(module);
+                } catch (ModuleException ex) {
+                    if (exception == null) exception = ex;
+                    else exception.addSuppressed(ex);
+                }
+            }
+
+            lazilyModules.clear();
+
+            if (exception != null) {
+                throw exception;
+            }
+
+            return loaded;
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -58,7 +99,9 @@ public class SimpleModulo implements Modulo {
                 throw new ModuleException(info.getName(), "Error while construct", t);
             }
 
-            loadModule0(module);
+            if (lazilyEnabling) {
+                lazilyModules.add(module);
+            } else loadModule0(module);
 
             return module;
         } finally {
@@ -93,6 +136,12 @@ public class SimpleModulo implements Modulo {
             if (isLoaded(name)) {
                 var module = getModule0(name);
                 unloadModule0(module);
+            } else {
+                var module = lazilyModules.stream().filter(m -> m.getName().equals(name)).findFirst();
+                module.ifPresent(m -> {
+                    unloadModuleSafe0(m);
+                    lazilyModules.remove(m);
+                });
             }
         } finally {
             lock.unlock();

@@ -6,6 +6,7 @@ import ru.dargen.modulo.loader.ModuleRawInfo;
 import ru.dargen.modulo.module.Module;
 import ru.dargen.modulo.module.ModuleException;
 
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -16,6 +17,12 @@ public interface Modulo {
     Map<String, Module> getLoadedModules();
 
     ModuleClassLoaderFactory<?> getClassLoaderFactory();
+
+    void lazilyEnabling(boolean lazilyEnabling);
+
+    boolean isLazilyEnabling();
+
+    List<Module> enableLazies();
 
     boolean isLoaded(String name);
 

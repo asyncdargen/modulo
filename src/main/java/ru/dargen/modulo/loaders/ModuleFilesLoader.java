@@ -61,12 +61,15 @@ public class ModuleFilesLoader extends Thread {
     private void loadInitialModules() {
         var modulesPaths = Files.list(folder).filter(file -> file.toString().endsWith(".jar")).toList();
 
+        modulo.lazilyEnabling(true);
         for (Path path : modulesPaths) {
             var module = updateModule(path, UpdateAction.LOAD);
             if (module != null && module.isEnabled()) {
                 loadedModules.put(path.toString(), module);
             }
         }
+        modulo.enableLazies();
+        modulo.lazilyEnabling(false);
     }
 
     @SneakyThrows

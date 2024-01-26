@@ -2,12 +2,7 @@ package ru.dargen.modulo.util;
 
 public class Timer {
 
-    private static ThreadLocal<Timer> THREAD_LOCAL = new ThreadLocal<>() {
-        @Override
-        protected Timer initialValue() {
-            return new Timer();
-        }
-    };
+    private static ThreadLocal<Timer> THREAD_LOCAL = ThreadLocal.withInitial(Timer::new);
 
     private long timestamp;
 
@@ -20,9 +15,11 @@ public class Timer {
     }
 
     public long restart() {
-        var value = end();
-        start();
-        return value;
+        try {
+            return end();
+        } finally {
+            start();
+        }
     }
 
     public static Timer get() {
