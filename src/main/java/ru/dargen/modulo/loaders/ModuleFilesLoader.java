@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import ru.dargen.modulo.Modulo;
+import ru.dargen.modulo.SimpleModulo;
 import ru.dargen.modulo.loader.ModuleLoader;
 import ru.dargen.modulo.loader.ModuleRawInfo;
 import ru.dargen.modulo.module.Module;
@@ -18,14 +19,16 @@ import static java.nio.file.StandardWatchEventKinds.*;
 
 public class ModuleFilesLoader extends Thread {
 
-    private final Modulo modulo;
+    private final SimpleModulo modulo;
     private final Map<String, Module> loadedModules = new ConcurrentHashMap<>();
 
     private final Path folder;
     private final WatchService service;
 
+    private boolean showLoadErrors = false;
+
     @SneakyThrows
-    public ModuleFilesLoader(Modulo modulo, Path folder) {
+    public ModuleFilesLoader(SimpleModulo modulo, Path folder) {
         super("ModuleFilesLoader-Thread");
         setDaemon(true);
 
@@ -37,16 +40,21 @@ public class ModuleFilesLoader extends Thread {
         start();
     }
 
-    public static ModuleFilesLoader watch(Modulo modulo, Path folder) {
+    public static ModuleFilesLoader watch(SimpleModulo modulo, Path folder) {
         return new ModuleFilesLoader(modulo, folder);
     }
 
-    public static ModuleFilesLoader watch(Modulo modulo, File folder) {
+    public static ModuleFilesLoader watch(SimpleModulo modulo, File folder) {
         return watch(modulo, folder.toPath());
     }
 
-    public static ModuleFilesLoader watch(Modulo modulo, String folder) {
+    public static ModuleFilesLoader watch(SimpleModulo modulo, String folder) {
         return watch(modulo, Paths.get(folder));
+    }
+
+    private ModuleFilesLoader showLoadErrors() {
+        showLoadErrors = true;
+        return this;
     }
 
     @SneakyThrows
@@ -94,10 +102,13 @@ public class ModuleFilesLoader extends Thread {
     public Module updateModule(Path path, UpdateAction action) {
         ModuleRawInfo info = null;
         try {
-            info = ModuleLoader.load(path);
+            info = ModuleLoader.loadInfo(path);
         } catch (Throwable t) {
             if (action != UpdateAction.UNLOAD) {
-                Modulo.LOGGER.log(Level.SEVERE, "Load error ", t);
+                if (showLoadErrors) {
+                    Modulo.LOGGER.log(Level.SEVERE, "Load error ", t);
+                }
+
                 return null;
             }
         }
@@ -145,18 +156,18 @@ public class ModuleFilesLoader extends Thread {
 
         LOAD(ENTRY_CREATE) {
             @Override
-            protected Module runAction(Modulo modulo, ModuleRawInfo info) {
+            protected Module runAction(SimpleModulo modulo, ModuleRawInfo info) {
                 return modulo.loadModule(info);
             }
         }, RELOAD(ENTRY_MODIFY) {
             @Override
-            protected Module runAction(Modulo modulo, ModuleRawInfo info) {
+            protected Module runAction(SimpleModulo modulo, ModuleRawInfo info) {
                 modulo.reloadModule(info);
                 return modulo.getModule(info.getName());
             }
         }, UNLOAD(ENTRY_DELETE) {
             @Override
-            protected Module runAction(Modulo modulo, ModuleRawInfo info) {
+            protected Module runAction(SimpleModulo modulo, ModuleRawInfo info) {
                 modulo.unloadModule(info.getName());
                 return null;
             }
@@ -164,7 +175,7 @@ public class ModuleFilesLoader extends Thread {
 
         private final WatchEvent.Kind<?> kind;
 
-        public Module run(Modulo modulo, ModuleRawInfo info) {
+        public Module run(SimpleModulo modulo, ModuleRawInfo info) {
             try {
                 return runAction(modulo, info);
             } catch (Throwable throwable) {
@@ -174,7 +185,7 @@ public class ModuleFilesLoader extends Thread {
             return null;
         }
 
-        protected abstract Module runAction(Modulo modulo, ModuleRawInfo info);
+        protected abstract Module runAction(SimpleModulo modulo, ModuleRawInfo info);
 
         public static UpdateAction byKind(WatchEvent.Kind<?> kind) {
             for (UpdateAction value : values()) {

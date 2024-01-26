@@ -26,7 +26,7 @@ import java.util.Properties;
 @UtilityClass
 public class ModuleLoader {
 
-    public ModuleRawInfo load(String rawName, InputStream input) {
+    public ModuleRawInfo loadInfo(String rawName, InputStream input) {
         Map<String, byte[]> resources;
         try {
             resources = IOHelper.readJarEntries(input);
@@ -53,18 +53,18 @@ public class ModuleLoader {
     }
 
     @SneakyThrows
-    public ModuleRawInfo load(Path path) {
-        return load(path.toString(), Files.newInputStream(path));
+    public ModuleRawInfo loadInfo(Path path) {
+        return loadInfo(path.toString(), Files.newInputStream(path));
     }
 
     @SneakyThrows
-    public ModuleRawInfo load(File file) {
-        return load(file.toPath());
+    public ModuleRawInfo loadInfo(File file) {
+        return loadInfo(file.toPath());
     }
 
     @SneakyThrows
-    public ModuleRawInfo load(URL url) {
-        return load(url.toString(), url.openStream());
+    public ModuleRawInfo loadInfo(URL url) {
+        return loadInfo(url.toString(), url.openStream());
     }
 
     public Module construct(ModuleRawInfo info, ModuleClassLoaderFactory<?> classLoaderFactory) {

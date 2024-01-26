@@ -23,10 +23,10 @@ ___
 ## Module loading
 ```java
 Modulo modulo = Modulo.create();
-modulo.loadModule(ModuleLoader.load(Paths.get("module.jar")));
+modulo.loadModule(ModuleLoader.loadInfo(Paths.get("module.jar")));
 
 //Reload
-modulo.reloadModule(ModuleLoader.load(Paths.get("module.jar")));
+modulo.reloadModule(ModuleLoader.loadInfo(Paths.get("module.jar")));
 
 //Unload
 modulo.unloadModule("example");

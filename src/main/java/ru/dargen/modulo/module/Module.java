@@ -2,7 +2,6 @@ package ru.dargen.modulo.module;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.SneakyThrows;
 import ru.dargen.modulo.classloader.ModuleClassLoader;
 import ru.dargen.modulo.loader.ModuleProperties;
 import ru.dargen.modulo.loader.ModuleRawInfo;
@@ -29,7 +28,7 @@ public class Module {
         return properties.getName();
     }
 
-    public void enable() {
+    public void enable() throws ModuleException {
         if (!enabled) try {
             entrypoint.enable();
             enabled = true;
@@ -39,7 +38,7 @@ public class Module {
         }
     }
 
-    public void reload() {
+    public void reload() throws ModuleException {
         if (enabled) try {
             entrypoint.reload();
         } catch (Throwable t) {
@@ -47,8 +46,7 @@ public class Module {
         }
     }
 
-    @SneakyThrows
-    public void disable() {
+    public void disable() throws ModuleException {
         if (enabled) try {
             enabled = false;
             entrypoint.disable();
