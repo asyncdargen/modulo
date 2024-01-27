@@ -1,4 +1,4 @@
-package ru.dargen.modulo.classloader.builtin;
+package ru.dargen.modulo.classloader.depend;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -11,11 +11,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 @RequiredArgsConstructor
-public class BuiltInComplexModuleClassHolder {
+public class DependModuleClassHolder {
 
     private final ClassLoader parentClassLoader;
 
-    private final Set<BuiltInModuleClassLoader> classLoaders = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<DependModuleClassLoader> classLoaders = Collections.newSetFromMap(new ConcurrentHashMap<>());
     @Getter(AccessLevel.PACKAGE)
     private final Map<String, Class<?>> loadedClasses = new ConcurrentHashMap<>();
 
@@ -23,7 +23,7 @@ public class BuiltInComplexModuleClassHolder {
         return findClass(name, null);
     }
 
-    public Class<?> findClass(String name, BuiltInModuleClassLoader callerClassLoader) {
+    public Class<?> findClass(String name, DependModuleClassLoader callerClassLoader) {
         var clazz = loadedClasses.get(name);
 
         if (clazz == null) {
@@ -34,7 +34,7 @@ public class BuiltInComplexModuleClassHolder {
         }
 
         if (clazz == null) {
-            for (BuiltInModuleClassLoader classLoader : classLoaders) {
+            for (DependModuleClassLoader classLoader : classLoaders) {
                 if (classLoader == callerClassLoader) continue;
 
                 if ((clazz = classLoader.findClassOrNull(name)) != null) {
@@ -45,18 +45,18 @@ public class BuiltInComplexModuleClassHolder {
         }
 
         if (clazz != null
-                && clazz.getClassLoader() instanceof BuiltInModuleClassLoader loader
-                && callerClassLoader.getModule() != null && !callerClassLoader.getModule().hasAccessTo(loader.getModule())
+                && clazz.getClassLoader() instanceof DependModuleClassLoader loader
+                && callerClassLoader.getModule() != null && !callerClassLoader.getProperties().hasAccessTo(loader.getProperties())
         ) clazz = null;
 
         return clazz;
     }
 
-    public void addClassLoader(BuiltInModuleClassLoader classLoader) {
+    public void addClassLoader(DependModuleClassLoader classLoader) {
         classLoaders.add(classLoader);
     }
 
-    public void removeClassLoader(BuiltInModuleClassLoader classLoader) {
+    public void removeClassLoader(DependModuleClassLoader classLoader) {
         classLoaders.remove(classLoader);
         loadedClasses.values().removeIf(clazz -> clazz.getClassLoader() == classLoader);
     }

@@ -59,7 +59,7 @@ public class AgentHelper {
         method.visitFieldInsn(PUTSTATIC, AGENT_CLASS_NAME, AGENT_INSTRUMENTATION_FIELD, "Ljava/lang/instrument/Instrumentation;");
         method.visitInsn(RETURN);
         method.visitEnd();
-        method.visitMaxs(1, 2);
+        method.visitMaxs(0, 0);
 
         return node.toByteArray();
     }

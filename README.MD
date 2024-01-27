@@ -22,7 +22,10 @@ ___
 
 ## Module loading
 ```java
-Modulo modulo = Modulo.create();
+//Use `Module ClassLoaderFactory.depend()` if the modules will depend on each other
+Modulo modulo = Modulo.create(ModuleClassLoaderFactory.isolated()); 
+
+//Loading
 modulo.loadModule(ModuleLoader.loadInfo(Paths.get("module.jar")));
 
 //Reload
@@ -59,12 +62,15 @@ class ExampleModule implements ModuleEntrypoint {
 name=example
 entrypoint=path.to.ExampleModule
 
+#Using kotlin object as ModuleEntrypoint
+kotlin-object-entrypoint=false
+```
+For depend classloader strategy
+```properties
 #By default all modules accessed to all modules
 isolate=false
 #Allow access in all modules
 force-depend=false
-#Using kotlin object as ModuleEntrypoint
-kotlin-object-entrypoint=false
 
 #Allow access if isolated module ([, ]), example: depends=test, test2,example-depend
 #depends=example-depend 

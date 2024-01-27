@@ -59,10 +59,4 @@ public class Module {
         return new ModuleRawInfo(properties, classLoader.getEntries());
     }
 
-    public boolean hasAccessTo(Module module) {
-        return (!module.getProperties().isIsolated() && !getProperties().isIsolated())
-                || (module.getProperties().isForceDepend() || getProperties().isForceDepend())
-                || getProperties().getDepends().contains(module.getName());
-    }
-
 }

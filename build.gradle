@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'ru.dargen'
-version '1.0.2'
+version '1.0.3'
 
 repositories {
     mavenCentral()
@@ -17,6 +17,11 @@ dependencies {
 
     implementation 'org.ow2.asm:asm:9.1'
 
-    implementation 'com.github.asyncdargen.crowbar:crowbar-core:1.0.4'
-    implementation 'com.github.asyncdargen.crowbar:crowbar-asm:1.0.4'
+    implementation 'com.github.asyncdargen.crowbar:crowbar-core:1.0.5'
+    implementation 'com.github.asyncdargen.crowbar:crowbar-asm:1.0.5'
+}
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+    withSourcesJar()
 }

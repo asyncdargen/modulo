@@ -1,10 +1,9 @@
-package ru.dargen.modulo.classloader.builtin;
+package ru.dargen.modulo.classloader.url;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import ru.dargen.modulo.classloader.ModuleClassLoader;
-import ru.dargen.modulo.classloader.url.JarURLStreamHandler;
 import ru.dargen.modulo.module.Module;
 
 import java.net.URL;
@@ -13,20 +12,17 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
-public class BuiltInModuleClassLoader extends URLClassLoader implements ModuleClassLoader {
+public class ModuleURLClassLoader extends URLClassLoader implements ModuleClassLoader {
 
     @Setter
-    private Module module;
-    private final BuiltInComplexModuleClassHolder complexClassLoader;
-    private final JarURLStreamHandler jarURLStreamHandler;
-    private final Map<String, Class<?>> loadedClasses = new ConcurrentHashMap<>();
+    protected Module module;
 
-    @SneakyThrows
-    public BuiltInModuleClassLoader(JarURLStreamHandler jarURLStreamHandler, BuiltInComplexModuleClassHolder complexClassLoader) {
-        super(new URL[]{jarURLStreamHandler.createURL()}, null);
-        this.complexClassLoader = complexClassLoader;
+    protected final JarURLStreamHandler jarURLStreamHandler;
+    protected final Map<String, Class<?>> loadedClasses = new ConcurrentHashMap<>();
+
+    public ModuleURLClassLoader(JarURLStreamHandler jarURLStreamHandler, ClassLoader parent) {
+        super(new URL[]{jarURLStreamHandler.createURL()}, parent);
         this.jarURLStreamHandler = jarURLStreamHandler;
-        complexClassLoader.addClassLoader(this);
     }
 
     @Override
@@ -34,11 +30,8 @@ public class BuiltInModuleClassLoader extends URLClassLoader implements ModuleCl
         var clazz = findClassOrNull(name);
 
         if (clazz == null) {
-            clazz = complexClassLoader.findClass(name, this);
-        }
-
-        if (clazz == null) {
-            throw new ClassNotFoundException(name);
+            if (getParent() != null) clazz = getParent().loadClass(name);
+            else throw new ClassNotFoundException(name);
         }
 
         return clazz;
@@ -50,8 +43,7 @@ public class BuiltInModuleClassLoader extends URLClassLoader implements ModuleCl
 
         if (clazz == null) try {
             clazz = findClass(name);
-            loadedClasses.put(name, clazz);
-            complexClassLoader.getLoadedClasses().put(name, clazz);
+            if (clazz != null) loadedClasses.put(name, clazz);
         } catch (Throwable t) {
         }
 
@@ -65,7 +57,6 @@ public class BuiltInModuleClassLoader extends URLClassLoader implements ModuleCl
 
     @Override
     public Class<?> invalidateLoadedClass(String name) {
-        complexClassLoader.getLoadedClasses().remove(name);
         return loadedClasses.remove(name);
     }
 
@@ -87,7 +78,6 @@ public class BuiltInModuleClassLoader extends URLClassLoader implements ModuleCl
     @Override
     @SneakyThrows
     public void close() {
-        complexClassLoader.removeClassLoader(this);
         loadedClasses.clear();
         jarURLStreamHandler.close();
         super.close();

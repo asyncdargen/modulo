@@ -6,13 +6,15 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import java.util.HashMap;
 import java.util.Map;
 
+@NoArgsConstructor
 @AllArgsConstructor
 public class JarURLStreamHandler extends URLStreamHandler {
 
     @Getter
-    private Map<String, byte[]> entries;
+    private Map<String, byte[]> entries = new HashMap<>();
 
     @Override
     protected URLConnection openConnection(URL url) throws IOException {

@@ -2,8 +2,6 @@ package ru.dargen.modulo;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 import ru.dargen.modulo.classloader.ModuleClassLoaderFactory;
 import ru.dargen.modulo.loader.ModuleLoader;
 import ru.dargen.modulo.loader.ModuleRawInfo;
@@ -25,8 +23,6 @@ public class SimpleModulo implements Modulo {
     private final Lock lock = new ReentrantLock();
     private final Map<String, Module> loadedModules = new ConcurrentHashMap<>();
 
-    @Setter
-    @Accessors(fluent = true)
     private boolean lazilyEnabling;
     private final Set<Module> lazilyModules = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
@@ -42,9 +38,18 @@ public class SimpleModulo implements Modulo {
     }
 
     @Override
-    public List<Module> enableLazies() {
+    public void lazilyEnabling(boolean lazilyEnabling) {
+        this.lazilyEnabling = lazilyEnabling;
+    }
+
+    @Override
+    public List<Module> enableLazies(boolean disableLazily) {
         try {
             lock.lock();
+            if (disableLazily) {
+                this.lazilyEnabling = false;
+            }
+
             ModuleException exception = null;
             var loaded = new ArrayList<Module>();
 

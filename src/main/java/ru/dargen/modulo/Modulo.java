@@ -1,7 +1,6 @@
 package ru.dargen.modulo;
 
 import ru.dargen.modulo.classloader.ModuleClassLoaderFactory;
-import ru.dargen.modulo.classloader.builtin.BuiltInModuleClassLoaderFactory;
 import ru.dargen.modulo.loader.ModuleRawInfo;
 import ru.dargen.modulo.module.Module;
 import ru.dargen.modulo.module.ModuleException;
@@ -22,7 +21,11 @@ public interface Modulo {
 
     boolean isLazilyEnabling();
 
-    List<Module> enableLazies();
+    List<Module> enableLazies(boolean disableLazily);
+
+    default List<Module> enableLazies() {
+        return enableLazies(false);
+    }
 
     boolean isLoaded(String name);
 
@@ -38,24 +41,8 @@ public interface Modulo {
 
     void unloadModule(String name) throws ModuleException;
 
-    static ModuleClassLoaderFactory<?> createClassLoaderFactory(ClassLoader parentClassLoader) {
-        return new BuiltInModuleClassLoaderFactory(parentClassLoader);
-    }
-
-    static ModuleClassLoaderFactory<?> createClassLoaderFactory() {
-        return createClassLoaderFactory(SimpleModulo.class.getClassLoader());
-    }
-
-    static SimpleModulo create(ModuleClassLoaderFactory<?> classLoaderFactory) {
+    static Modulo create(ModuleClassLoaderFactory<?> classLoaderFactory) {
         return new SimpleModulo(classLoaderFactory);
-    }
-
-    static SimpleModulo create(ClassLoader parentClassLoader) {
-        return create(createClassLoaderFactory(parentClassLoader));
-    }
-
-    static SimpleModulo create() {
-        return create(createClassLoaderFactory());
     }
 
 }
