@@ -53,6 +53,11 @@ public class ModuleLoader {
     }
 
     @SneakyThrows
+    public ModuleRawInfo loadInfo(String name, byte[] bytes) {
+        return loadInfo(name, IOHelper.createInput(bytes));
+    }
+
+    @SneakyThrows
     public ModuleRawInfo loadInfo(Path path) {
         return loadInfo(path.toString(), Files.newInputStream(path));
     }
