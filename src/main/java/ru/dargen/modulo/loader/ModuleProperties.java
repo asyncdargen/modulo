@@ -26,6 +26,10 @@ public class ModuleProperties {
         );
     }
 
+    public ModuleProperties(String name, String entrypoint, boolean kotlinObjectEntryPoint) {
+        this(name, entrypoint, kotlinObjectEntryPoint, new Properties());
+    }
+
     public boolean equalsBase(ModuleProperties properties) {
         return properties.getName().equals(getName()) && properties.getEntrypoint().equals(getEntrypoint());
     }

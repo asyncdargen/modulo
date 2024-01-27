@@ -26,17 +26,35 @@ import java.util.Properties;
 @UtilityClass
 public class ModuleLoader {
 
-    public ModuleRawInfo loadInfo(String rawName, InputStream input) {
-        Map<String, byte[]> resources;
+    public ModuleRawInfo loadInfo(ModuleProperties properties, Map<String, byte[]> entries) {
+        return new ModuleRawInfo(properties, entries);
+    }
+
+    public ModuleRawInfo loadInfo(ModuleProperties properties, InputStream input) {
+        Map<String, byte[]> entries;
         try {
-            resources = IOHelper.readJarEntries(input);
+            entries = IOHelper.readJarEntries(input);
+        } catch (IOException e) {
+            throw new ModuleLoadException(properties.getName(), "Error while entries loading", e);
+        }
+        return loadInfo(properties, entries);
+    }
+
+    public ModuleRawInfo loadInfo(ModuleProperties properties, byte[] bytes) {
+        return loadInfo(properties, IOHelper.createInput(bytes));
+    }
+
+    public ModuleRawInfo loadInfo(String rawName, InputStream input) {
+        Map<String, byte[]> entries;
+        try {
+            entries = IOHelper.readJarEntries(input);
         } catch (IOException e) {
             throw new ModuleLoadException(rawName, "Error while entries loading", e);
         }
 
         ModuleProperties properties;
         try {
-            var rawPropertiesBytes = resources.get("module.properties");
+            var rawPropertiesBytes = entries.get("module.properties");
             if (rawPropertiesBytes == null) {
                 throw new ModuleLoadException(rawName, "Not found module.properties");
             }
@@ -49,7 +67,7 @@ public class ModuleLoader {
             throw new ModuleLoadException(rawName, "Error while loading properties", e);
         }
 
-        return new ModuleRawInfo(properties, resources);
+        return loadInfo(properties, entries);
     }
 
     @SneakyThrows
